@@ -148,4 +148,18 @@ contract LoopTasksTest is Test {
     /// @dev ...but the vault can, because it holds MINTER_ROLE and burn() answers to that
     ///      same role. This test proves the backdoor exists; it does not justify it.
 
+    function test_Ex4_VaultHoldsTheKey_CanBurnAnyonesBalance() public {
+        usdc.faucet(alice, 1000e6);
+        vm.startPrank(alice);
+        usdc.approve(address(vault), 1000e6);
+        vault.deposit(1000e6);
+        vm.stopPrank();
+        assertEq(stable.balanceOf(alice), 1000e6);
+
+        // 金库持有 MINTER_ROLE，可以直接烧掉 alice 的余额——后门真实存在
+        vm.prank(address(vault));
+        stable.burn(alice, 1000e6);
+
+        assertEq(stable.balanceOf(alice), 0);
+    }
 }
